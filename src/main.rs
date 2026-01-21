@@ -1,17 +1,28 @@
 use std::{io::{self, Write}, str::SplitWhitespace};
-use std::env;
+use std::{env, path};
 
 fn main() {
+
+    set_home_dir(true);
 
     loop {
 
         print!("username@hostname> ");
+        
+        // Returns: Result<(), std::io::Error>
+        // (Returns Ok(()) if successful, or an Error if it fails)
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
+        
+        // Returns: Result<usize, std::io::Error>
+        // (The 'usize' is the number of bytes read, e.g., 5 bytes)
         io::stdin().read_line(&mut input).unwrap();
 
         let mut cmd_parts = input.trim().split_whitespace(); 
+        
+        // Returns: Option<&str>
+        // (Returns Some("ls") if text exists, or None if empty)
         let command = cmd_parts.next().unwrap_or("");
 
         match command {        
@@ -30,6 +41,7 @@ fn main() {
 
 fn handle_ls(mut args: SplitWhitespace<'_>) {
     
+    // Returns: Option<&str>
     let first_args = args.next().unwrap_or("");
 
     match first_args {
@@ -44,12 +56,57 @@ fn handle_ls(mut args: SplitWhitespace<'_>) {
 
 fn handle_pwd() {
     
+    // Returns: Result<PathBuf, std::io::Error>
+    // (We unwrap it to get the actual PathBuf)
     let path = env::current_dir().unwrap();
 
+    // path.display() returns: std::path::Display
+    // (A helper struct that makes paths safe to print)
     println!("{}", path.display());
 }
 
 
-fn handle_cd(mut _args: SplitWhitespace<'_>) {
-// TODO: Implement cd to switch back to home folder
+fn handle_cd(mut args: SplitWhitespace<'_>) {
+
+    // Returns: Option<&str>
+    let first_args = args.next().unwrap_or("");
+
+    match first_args {
+        "" => set_home_dir(false),
+        path => set_current_user_dir(path),
+    }
+
+    fn set_current_user_dir(path: &str) {
+
+        // Returns: &Path (A slice/view of a path)
+        let converted_path = path::Path::new(path);
+
+        // Returns: Result<(), std::io::Error>
+        // (We check if it is 'Err' to catch failures)
+        if let Err(e) = env::set_current_dir(&converted_path) {
+            
+            eprint!("Error: {}", e);
+        } else {
+
+            println!("{}", converted_path.display());
+        }     
+    }
+}
+
+fn set_home_dir(silent: bool) {
+    
+    // Returns: Option<PathBuf>
+    // (Returns Some(PathBuf) if found, None if the OS has no home)
+    let home_path = env::home_dir().expect("No home dir found. Sus!");
+
+    // Returns: Result<(), std::io::Error>
+    if let Err(e) = env::set_current_dir(&home_path) {
+
+        eprint!("Error: {}", e);
+    } else {
+
+        if !silent {
+            println!("{}", home_path.display());
+        }
+    }
 }
