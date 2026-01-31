@@ -4,10 +4,18 @@ use std::{env, path};
 fn main() {
 
     set_home_dir(true);
+    
+    // whoami::username() returns: Result<String, whoami::Error>
+    // .unwrap_or_else(...) returns: String (The actual name or "guest")
+    let username = whoami::username().unwrap_or_else(|_| "guest".to_string());
+
+    // whoami::hostname() returns: Result<String, whoami::Error>
+    // .unwrap_or_else(...) returns: String
+    let hostname = whoami::hostname().unwrap_or_else(|_| "unknown".to_string());
 
     loop {
 
-        print!("username@hostname> ");
+        print!("{}@{} ~ $ ", username, hostname);
         
         // Returns: Result<(), std::io::Error>
         // (Returns Ok(()) if successful, or an Error if it fails)
